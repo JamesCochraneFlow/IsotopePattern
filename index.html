@@ -2,20 +2,31 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Isotope Pattern Calculator</title>
+<title>Isotope Pattern Tool</title>
 <style>
 body {  font-family: Arial, Helvetica, sans-serif; }
 input, button { font-size: 15px; padding: 4px 4px; }
 </style>
 </head>
 <body>
-<h2>Isotope Pattern Calculator</h2>
+<h2>Isotope Pattern Tool</h2>
 <label>Molecular formula:
-<input id="formula" value="C66H31D41N4OPt" />
+<input id="formula" value="" placeholder="C78H28D38N4OPtSi" />
 </label>
 <button onclick="run()">Calculate</button>
-<label style="margin-left: 100px;">Intensity cutoff:</label>
-<input type="range" id="cutoffSlider" min="-15" max="-1" step="1" value="-6" oninput="updateCutoffLabel()" style="width:100px;
+<label style="margin-left: 20px;">Intensity cutoff:</label>
+<input type="range" id="cutoffSlider" min="-15" max="-1" step="1" value="-10" oninput="updateCutoffLabel()" style="width:100px;
+ margin-left: 5px;
+  height: 2px;
+  border-radius: 5px;  
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;  ">
+
+<label style="margin-left: 20px;"><span id = "nValue">nD → nH</span></label>
+<input type="range" id="nSlider" min="0" max="9" step="1" value="0" oninput="updateN()" style="width:100px;
  margin-left: 5px;
   height: 2px;
   border-radius: 5px;  
@@ -25,19 +36,30 @@ input, button { font-size: 15px; padding: 4px 4px; }
   -webkit-transition: .2s;
   transition: opacity .2s;  ">
 <br><br>
-<canvas id="plot" width="700" height="150"></canvas>
-<canvas id="plot2" width="700" height="150"></canvas>
-<canvas id="plot3" width="700" height="150"></canvas>
-<canvas id="plot4" width="700" height="150"></canvas>
-<canvas id="plot5" width="700" height="150"></canvas>
+<canvas id="plot" width="800" height="150"></canvas>
+<canvas id="plot2" width="800" height="150"></canvas>
+<canvas id="plot3" width="800" height="150"></canvas>
+<canvas id="plot4" width="800" height="150"></canvas>
+<canvas id="plot5" width="800" height="150"></canvas>
+
 
 <script>
-let cutoffFactor = 1e-6;
+let cutoffFactor = 1e-10;
 
 function updateCutoffLabel(){
 const slider=document.getElementById('cutoffSlider');
 cutoffFactor = Math.pow(10, slider.value);
 // document.getElementById('cutoffValue').innerText = cutoffFactor.toExponential(1);
+    run();
+}
+
+let nValue = 0;
+
+function updateN(){
+const slider=document.getElementById('nSlider');
+nValue = parseInt(slider.value);
+nValueString = nValue.toString();
+document.getElementById('nValue').innerText = nValueString + "D → " + nValueString +"H";
     run();
 }
 
@@ -66,6 +88,8 @@ function parseFormula(formula){
     const el=m[1]; const n=m[2]?parseInt(m[2],10):1;
     comp[el]=(comp[el]||0)+n;
   }
+  comp["D"] -= nValue;
+  comp["H"] += nValue;
   return comp;
 }
 
@@ -84,6 +108,8 @@ function parseFormulaRemoveDAddCl(formula){ //////////////
     comp["Cl"] += 1;
   }
   comp["D"] -= 1;
+  comp["D"] -= nValue;
+  comp["H"] += nValue;
   return comp;
 }
 
@@ -96,7 +122,6 @@ function parseFormulaRemoveHAddCl(formula){ //////////////
     comp[el]=(comp[el]||0)+n;
   }
   
-
   if (!("Cl" in comp)){
     comp["Cl"] = 1;
   }
@@ -104,6 +129,8 @@ function parseFormulaRemoveHAddCl(formula){ //////////////
     comp["Cl"] += 1;
   }
   comp["H"] -= 1;
+  comp["D"] -= nValue;
+  comp["H"] += nValue;
   return comp;
 }
 
@@ -122,6 +149,8 @@ function parseFormulaRemoveDAddBr(formula){ //////////////
     comp["Br"] += 1;
   }
   comp["D"] -= 1;
+  comp["D"] -= nValue;
+  comp["H"] += nValue;
   return comp;
 }
 
@@ -142,7 +171,8 @@ function parseFormulaRemoveHAddBr(formula){ //////////////
   }
 
   comp["H"] -= 1;
- 
+  comp["D"] -= nValue;
+  comp["H"] += nValue;
   return comp;
 }
 
@@ -252,9 +282,9 @@ function draw(peaks,charge=1,plotid,title){
     const y=canvas.height-30;
     const h=p.intensity*(canvas.height-60);
     ctx.moveTo(x,y); ctx.lineTo(x,y-h);
+    ctx.lineWidth = 10;
     x_string = parseFloat(mz[i].toFixed(2)); ////////////////////////
     ctx.fillText(x_string,x-15,y-h-5); ////////////////
-   
   });
   ctx.stroke();
 //   ctx.fillText(minMz.toFixed(2),40,canvas.height-10);
