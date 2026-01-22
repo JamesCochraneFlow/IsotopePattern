@@ -36,7 +36,31 @@ input, button { font-size: 15px; padding: 4px 4px; }
   opacity: 0.7;
   -webkit-transition: .2s;
   transition: opacity .2s;  ">
+
+<label style="margin-left: 20px;"><span id = "thickness">Line thickness</span></label>
+<input type="range" id="nthickness" min="1" max="10" step="1" value="10" oninput="thickness()" style="width:100px;
+ margin-left: 5px;
+  height: 2px;
+  border-radius: 5px;  
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;  ">
+
+<label style="margin-left: 20px;"><span id = "masstoggle">Mass toggle</span></label>
+<input type="range" id="nmasstoggle" min="0" max="1" step="1" value="0" oninput="masstoggle()" style="width:100px;
+ margin-left: 5px;
+  height: 2px;
+  border-radius: 5px;  
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;  ">
+
 <br><br>
+<canvas id="plot8" width="1800" height="150"></canvas>
 <canvas id="plot" width="1000" height="150"></canvas>
 <canvas id="plot2" width="1000" height="150"></canvas>
 <canvas id="plot3" width="1000" height="150"></canvas>
@@ -46,9 +70,29 @@ input, button { font-size: 15px; padding: 4px 4px; }
 <canvas id="plot6" width="1000" height="150"></canvas>
 <canvas id="plot7" width="1000" height="150"></canvas>
 
-<canvas id="plot8" width="1800" height="150"></canvas>
 
 <script>
+
+
+let masstogglevalue = 0;
+
+function masstoggle(){
+const slider=document.getElementById('nmasstoggle');
+masstogglevalue = slider.value;
+// document.getElementById('cutoffValue').innerText = cutoffFactor.toExponential(1);
+    run();
+}
+
+let thicknessvalue = 10;
+
+function thickness(){
+const slider=document.getElementById('nthickness');
+thicknessvalue = slider.value;
+// document.getElementById('cutoffValue').innerText = cutoffFactor.toExponential(1);
+    run();
+}
+
+
 let cutoffFactor = 1e-10;
 
 function updateCutoffLabel(){
@@ -68,6 +112,8 @@ document.getElementById('nValue').innerText = nValueString + "D → " + nValueSt
     run();
 }
 
+
+
 const elements={
   C: { masses:[12.0000,13.003355], abundances:[0.9893,0.0107] },
   H: { masses:[1.00782503223,2.01410177812], abundances:[0.999885,0.000115] },
@@ -83,10 +129,9 @@ const elements={
 };
 
 const protonMass=1.007276466812;
-const binSize=0.05;
 
-const lowMassBin=0.002; ////
-const highMassBin=0.05;//////
+const lowMassBin=0.001; ////
+const highMassBin=0.001;//////
 
 
 function parseFormula(formula){
@@ -97,8 +142,18 @@ function parseFormula(formula){
     const el=m[1]; const n=m[2]?parseInt(m[2],10):1;
     comp[el]=(comp[el]||0)+n;
   }
-  comp["D"] -= nValue;
+  if (!("H" in comp)){
+    comp["D"] -= nValue;
+    comp["H"] = nValue;
+  }
+  else if (!("D" in comp)) {
+  comp["D"] = -nValue;
   comp["H"] += nValue;
+  }
+  else {
+    comp["H"] += nValue;
+    comp["D"] -= nValue;
+  }
   return comp;
 }
 
@@ -110,17 +165,44 @@ function parseFormulaRemoveDAddCl(formula){ //////////////
     const el=m[1]; const n=m[2]?parseInt(m[2],10):1;
     comp[el]=(comp[el]||0)+n;
   }
-  if (!("Cl" in comp)){
+
+  if (!("H" in comp)){
+     if (!("Cl" in comp)){
     comp["Cl"] = 1;
   }
   else {
     comp["Cl"] += 1;
   }
-  comp["D"] -= 1;
-  comp["D"] -= nValue;
+    comp["D"] -= nValue;
+    comp["H"] = nValue;
+  }
+  else if (!("D" in comp)) {
+     if (!("Cl" in comp)){
+    comp["Cl"] = 1;
+  }
+  else {
+    comp["Cl"] += 1;
+  }
+  comp["D"] = -nValue;
   comp["H"] += nValue;
+  }
+  else {
+     if (!("Cl" in comp)){
+    comp["Cl"] = 1;
+  }
+  else {
+    comp["Cl"] += 1;
+  }
+    comp["H"] += nValue;
+    comp["D"] -= nValue;
+  }
+
+  comp["D"] -= 1;
+  // comp["D"] -= nValue;
+  // comp["H"] += nValue;
   return comp;
 }
+
 
 function parseFormulaRemoveHAddCl(formula){ //////////////
   const re=/([A-Z][a-z]*)(\d*)/g;
@@ -131,15 +213,44 @@ function parseFormulaRemoveHAddCl(formula){ //////////////
     comp[el]=(comp[el]||0)+n;
   }
   
-  if (!("Cl" in comp)){
+
+  if (!("H" in comp)){
+    if (!("Cl" in comp)){
     comp["Cl"] = 1;
   }
   else {
     comp["Cl"] += 1;
   }
-  comp["H"] -= 1;
-  comp["D"] -= nValue;
+    comp["D"] -= nValue;
+    comp["H"] = nValue;
+  }
+  else if (!("D" in comp)) {
+    if (!("Cl" in comp)){
+    comp["Cl"] = 1;
+  }
+  else {
+    comp["Cl"] += 1;
+  }
+  comp["D"] = -nValue;
   comp["H"] += nValue;
+  }
+  else {
+    if (!("Cl" in comp)){
+    comp["Cl"] = 1;
+  }
+  else {
+    comp["Cl"] += 1;
+  }
+    comp["H"] += nValue;
+    comp["D"] -= nValue;
+  }
+
+
+
+  
+  comp["H"] -= 1;
+  // comp["D"] -= nValue;
+  // comp["H"] += nValue;
   return comp;
 }
 
@@ -151,15 +262,43 @@ function parseFormulaRemoveDAddBr(formula){ //////////////
     const el=m[1]; const n=m[2]?parseInt(m[2],10):1;
     comp[el]=(comp[el]||0)+n;
   }
-  if (!("Br" in comp)){
+
+  if (!("H" in comp)){
+     if (!("Br" in comp)){
     comp["Br"] = 1;
   }
   else {
     comp["Br"] += 1;
   }
-  comp["D"] -= 1;
-  comp["D"] -= nValue;
+    comp["D"] -= nValue;
+    comp["H"] = nValue;
+  }
+  else if (!("D" in comp)) {
+     if (!("Br" in comp)){
+    comp["Br"] = 1;
+  }
+  else {
+    comp["Br"] += 1;
+  }
+  comp["D"] = -nValue;
   comp["H"] += nValue;
+  }
+  else {
+     if (!("Br" in comp)){
+    comp["Br"] = 1;
+  }
+  else {
+    comp["Br"] += 1;
+  }
+    comp["H"] += nValue;
+    comp["D"] -= nValue;
+  }
+
+
+
+  comp["D"] -= 1;
+  // comp["D"] -= nValue;
+  // comp["H"] += nValue;
   return comp;
 }
 
@@ -172,16 +311,43 @@ function parseFormulaRemoveHAddBr(formula){ //////////////
     comp[el]=(comp[el]||0)+n;
   }
 
-  if (!("Br" in comp)){
+   if (!("H" in comp)){
+    if (!("Br" in comp)){
     comp["Br"] = 1;
   }
   else {
     comp["Br"] += 1;
   }
+    comp["D"] -= nValue;
+    comp["H"] = nValue;
+  }
+  else if (!("D" in comp)) {
+    if (!("Br" in comp)){
+    comp["Br"] = 1;
+  }
+  else {
+    comp["Br"] += 1;
+  }
+  comp["D"] = -nValue;
+  comp["H"] += nValue;
+  }
+  else {
+    if (!("Br" in comp)){
+    comp["Br"] = 1;
+  }
+  else {
+    comp["Br"] += 1;
+  }
+    comp["H"] += nValue;
+    comp["D"] -= nValue;
+  }
+
+
+  
 
   comp["H"] -= 1;
-  comp["D"] -= nValue;
-  comp["H"] += nValue;
+  // comp["D"] -= nValue;
+  // comp["H"] += nValue;
   return comp;
 }
 
@@ -190,7 +356,7 @@ function parseFormulaRemoveHAddBr(formula){ //////////////
 function binShifts(peaks){
 const bins = new Map();
 const lowMassBin = 0.001; // high-precision bin for low-mass elements
-const highMassBin = 0.01; // slightly coarser for high-mass elements
+const highMassBin = 0.001; // slightly coarser for high-mass elements
 
 
 for(const p of peaks){
@@ -238,17 +404,6 @@ return dist;
 
 
 
-
-// function mergeBins(peaks){
-//   const bins={};
-//   for(const p of peaks){
-//     const key=Math.round(p.mass/binSize)*binSize;
-//     if(!bins[key]) bins[key]=0;
-//     bins[key]+=p.intensity;
-//   }
-//   return Object.entries(bins).map(([mass,intensity])=>({mass:parseFloat(mass),intensity}));
-// }
-
 function convolve(a,b){
 const tmp = [];
 for(const x of a){
@@ -280,6 +435,49 @@ if(maxI <= 0 || !isFinite(maxI)) throw new Error('Invalid max intensity');
 
 return dist.map(p => ({ mass: monoMass + p.mass, intensity: p.intensity / maxI }))
 .filter(p => p.intensity > cutoffFactor);
+}
+
+
+
+
+function getMostIntenseMass(formula){
+  const pattern = isotopePatternFFT(formula);
+  if (!pattern.length) return NaN;
+
+  let maxPeak = pattern[0];
+  for (const p of pattern) {
+    if (p.intensity > maxPeak.intensity) {
+      maxPeak = p;
+    }
+  }
+  return maxPeak.mass;
+}
+
+function getMostIntenseMassCl(formula){
+  const pattern = addIsotopeHalidePatterns(isotopePatternFFTRemoveDAddCl(formula),isotopePatternFFTRemoveHAddCl(formula));
+  if (!pattern.length) return NaN;
+
+  let maxPeak = pattern[0];
+  for (const p of pattern) {
+    if (p.intensity > maxPeak.intensity) {
+      maxPeak = p;
+    }
+  }
+  return maxPeak.mass;
+}
+
+
+function getMostIntenseMassBr(formula){
+  const pattern = addIsotopeHalidePatterns(isotopePatternFFTRemoveDAddBr(formula),isotopePatternFFTRemoveHAddBr(formula));
+  if (!pattern.length) return NaN;
+
+  let maxPeak = pattern[0];
+  for (const p of pattern) {
+    if (p.intensity > maxPeak.intensity) {
+      maxPeak = p;
+    }
+  }
+  return maxPeak.mass;
 }
 
 
@@ -390,16 +588,23 @@ function draw(peaks,charge=1,plotid,title){
     const y=canvas.height-30;
     const h=p.intensity*(canvas.height-60);
     ctx.moveTo(x,y); ctx.lineTo(x,y-h);
-    ctx.lineWidth = 10;
+    ctx.lineWidth = thicknessvalue;
+    ctx.fillStyle = "black";
+    if (masstogglevalue == 0) {
     x_string = parseFloat(mz[i].toFixed(2)); ////////////////////////
-    ctx.fillText(x_string,x-15,y-h-5); ////////////////
+    ctx.fillText(x_string,x-15,y-h-5);
+    } 
+    else {}
+    ////////////////
   });
   ctx.stroke();
 //   ctx.fillText(minMz.toFixed(2),40,canvas.height-10);
 //   ctx.fillText(maxMz.toFixed(2),canvas.width-80,canvas.height-10);
   const monoMass=Math.min(...mz);
   ctx.font = "20px Arial";
-  ctx.fillText(title,600,50); ////////////////
+  ctx.fillStyle = "red";
+
+  ctx.fillText(title,870,30); ////////////////
 //   ctx.fillText('Mono: '+monoMass.toFixed(2),50,canvas.height-25);
 }
 
@@ -484,20 +689,26 @@ function draw2(peaks,charge=1,plotid,title){
     const y=canvas.height-30;
     const h=p.intensity*(canvas.height-60);
     ctx.moveTo(x,y); ctx.lineTo(x,y-h);
-    ctx.lineWidth = 10;
+    ctx.lineWidth = thicknessvalue;
+
+    ctx.fillStyle = "black";
+    if (masstogglevalue == 0) {
     x_string = parseFloat(mz[i].toFixed(2)); ////////////////////////
-    ctx.fillText(x_string,x-15,y-h-5); ////////////////
+    ctx.fillText(x_string,x-15,y-h-5);
+    } 
+    else {}
   });
   ctx.stroke();
 //   ctx.fillText(minMz.toFixed(2),40,canvas.height-10);
 //   ctx.fillText(maxMz.toFixed(2),canvas.width-80,canvas.height-10);
   const monoMass=Math.min(...mz);
   ctx.font = "20px Arial";
-  ctx.fillText(title,600,50); ////////////////
+  ctx.fillStyle = "red";
+  ctx.fillText(title,870,30); ////////////////
 //   ctx.fillText('Mono: '+monoMass.toFixed(2),50,canvas.height-25);
 }
 
-function drawAll(peaks,charge=1,plotid,title){
+function drawAll(peaks,charge=1,plotid,title,formula){
   const canvas=document.getElementById(plotid);
   const ctx=canvas.getContext('2d');
 
@@ -511,16 +722,24 @@ function drawAll(peaks,charge=1,plotid,title){
     const y=canvas.height-30;
     const h=p.intensity*(canvas.height-60);
     ctx.moveTo(x,y); ctx.lineTo(x,y-h);
-    ctx.lineWidth = 10;
+    ctx.lineWidth = thicknessvalue;
+
+    ctx.fillStyle = "black";
+    if (masstogglevalue == 0) {
     x_string = parseFloat(mz[i].toFixed(2)); ////////////////////////
-    ctx.fillText(x_string,x-15,y-h-5); ////////////////
+    ctx.fillText(x_string,x-15,y-h-5);
+    } 
+    else {}
   });
   ctx.stroke();
 //   ctx.fillText(minMz.toFixed(2),40,canvas.height-10);
 //   ctx.fillText(maxMz.toFixed(2),canvas.width-80,canvas.height-10);
   const monoMass=Math.min(...mz);
   ctx.font = "20px Arial";
-  ctx.fillText(title,1600,50); ////////////////
+  ctx.fillStyle = "red";
+  ctx.fillText("M",70+((getMostIntenseMass(formula)-minMz)/(maxMz-minMz))*(canvas.width-80),140); ////////////////
+  ctx.fillText("M-(D/H)+Cl",30+((getMostIntenseMassCl(formula)-minMz)/(maxMz-minMz))*(canvas.width-80),140); ////////////////
+  ctx.fillText("M-(D/H)+Br",30+((getMostIntenseMassBr(formula)-minMz)/(maxMz-minMz))*(canvas.width-80),140); ////////////////
 //   ctx.fillText('Mono: '+monoMass.toFixed(2),50,canvas.height-25);
 }
 
@@ -528,8 +747,8 @@ function drawAll(peaks,charge=1,plotid,title){
 
 function run(){
   const f=document.getElementById('formula').value;
-  const peaks=isotopePatternFFT(f);
-  draw(peaks,1,"plot","M");
+
+  draw(isotopePatternFFT(f),1,"plot","M");
   draw(isotopePatternFFTRemoveDAddCl(f),1,"plot2","M-D+Cl"); ////////////////
   draw(isotopePatternFFTRemoveHAddCl(f),1,"plot3","M-H+Cl"); ////////////////
   draw(isotopePatternFFTRemoveDAddBr(f),1,"plot4","M-D+Br"); ////////////////
@@ -538,7 +757,7 @@ function run(){
   draw2(addIsotopeHalidePatterns(isotopePatternFFTRemoveDAddCl(f),isotopePatternFFTRemoveHAddCl(f)),1,"plot6","M-(D/H)+Cl");
   draw2(addIsotopeHalidePatterns(isotopePatternFFTRemoveDAddBr(f),isotopePatternFFTRemoveHAddBr(f)),1,"plot7","M-(D/H)+Br");
 
-  drawAll(addIsotopePatterns(isotopePatternFFT(f), isotopePatternFFTRemoveDAddCl(f),isotopePatternFFTRemoveHAddCl(f),isotopePatternFFTRemoveDAddBr(f),isotopePatternFFTRemoveHAddBr(f)),1,"plot8","Overlayed");
+  drawAll(addIsotopePatterns(isotopePatternFFT(f), isotopePatternFFTRemoveDAddCl(f),isotopePatternFFTRemoveHAddCl(f),isotopePatternFFTRemoveDAddBr(f),isotopePatternFFTRemoveHAddBr(f)),1,"plot8","Overlayed",f);
 }
 
 </script>
