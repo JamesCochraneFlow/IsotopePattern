@@ -5,6 +5,7 @@
 <title>Isotope Pattern Tool</title>
 <style>
 body {  font-family: Arial, Helvetica, sans-serif; }
+canvas {border:1px solid black}
 input, button { font-size: 15px; padding: 4px 4px; }
 </style>
 </head>
@@ -15,7 +16,7 @@ input, button { font-size: 15px; padding: 4px 4px; }
 </label>
 <button onclick="run()">Calculate</button>
 <label style="margin-left: 20px;">Intensity cutoff:</label>
-<input type="range" id="cutoffSlider" min="-15" max="-1" step="1" value="-10" oninput="updateCutoffLabel()" style="width:100px;
+<input type="range" id="cutoffSlider" min="-50" max="-1" step="1" value="-10" oninput="updateCutoffLabel()" style="width:100px;
  margin-left: 5px;
   height: 2px;
   border-radius: 5px;  
@@ -36,12 +37,16 @@ input, button { font-size: 15px; padding: 4px 4px; }
   -webkit-transition: .2s;
   transition: opacity .2s;  ">
 <br><br>
-<canvas id="plot" width="800" height="150"></canvas>
-<canvas id="plot2" width="800" height="150"></canvas>
-<canvas id="plot3" width="800" height="150"></canvas>
-<canvas id="plot4" width="800" height="150"></canvas>
-<canvas id="plot5" width="800" height="150"></canvas>
+<canvas id="plot" width="1000" height="150"></canvas>
+<canvas id="plot2" width="1000" height="150"></canvas>
+<canvas id="plot3" width="1000" height="150"></canvas>
+<canvas id="plot4" width="1000" height="150"></canvas>
+<canvas id="plot5" width="1000" height="150"></canvas>
 
+<canvas id="plot6" width="1000" height="150"></canvas>
+<canvas id="plot7" width="1000" height="150"></canvas>
+
+<canvas id="plot8" width="1800" height="150"></canvas>
 
 <script>
 let cutoffFactor = 1e-10;
@@ -79,6 +84,10 @@ const elements={
 
 const protonMass=1.007276466812;
 const binSize=0.05;
+
+const lowMassBin=0.002; ////
+const highMassBin=0.05;//////
+
 
 function parseFormula(formula){
   const re=/([A-Z][a-z]*)(\d*)/g;
@@ -176,97 +185,196 @@ function parseFormulaRemoveHAddBr(formula){ //////////////
   return comp;
 }
 
-function generateElementArray(element,count){
-  const data=elements[element];
-  const poly=[];
-  for(let i=0;i<data.masses.length;i++) poly.push({mass:data.masses[i], intensity:data.abundances[i]});
-  let dist=[{mass:0,intensity:1}];
-  for(let j=0;j<count;j++){
-    const tmp=[];
-    for(const d of dist){
-      for(const p of poly){
-        tmp.push({mass:d.mass+p.mass, intensity:d.intensity*p.intensity});
-      }
-    }
-    dist=mergeBins(tmp);
-  }
-  return dist;
+
+
+function binShifts(peaks){
+const bins = new Map();
+const lowMassBin = 0.001; // high-precision bin for low-mass elements
+const highMassBin = 0.01; // slightly coarser for high-mass elements
+
+
+for(const p of peaks){
+if(typeof p.mass !== 'number' || typeof p.intensity !== 'number')
+throw new Error('Invalid peak: '+JSON.stringify(p));
+
+
+const bin = Math.abs(p.mass) < 50 ? lowMassBin : highMassBin;
+// floating-point stable binning
+const key = Math.round((p.mass + 1e-12) / bin) * bin;
+bins.set(key, (bins.get(key) || 0) + p.intensity);
 }
 
-function mergeBins(peaks){
-  const bins={};
-  for(const p of peaks){
-    const key=Math.round(p.mass/binSize)*binSize;
-    if(!bins[key]) bins[key]=0;
-    bins[key]+=p.intensity;
-  }
-  return Object.entries(bins).map(([mass,intensity])=>({mass:parseFloat(mass),intensity}));
+
+// preserve zero-shift peak
+if(!bins.has(0)) bins.set(0, (bins.get(0) || 0));
+
+
+return [...bins.entries()].map(([m,i]) => ({ mass: m, intensity: i }));
 }
 
-function convolveSparse(a,b){
-  const result=[];
-  for(const pa of a){
-    for(const pb of b){
-      result.push({mass:pa.mass+pb.mass, intensity:pa.intensity*pb.intensity});
-    }
-  }
-  return mergeBins(result);
+
+
+function generateElementArray(element, count){
+const data = elements[element];
+if(!data) throw new Error('Unknown element: '+element);
+const mono = data.masses[0];
+
+
+const poly = data.masses.map((m,i) => ({ mass: m - mono, intensity: data.abundances[i] }));
+
+
+let dist = [{ mass: 0, intensity: 1 }];
+for(let j=0; j<count; j++){
+const tmp = [];
+for(const d of dist){
+for(const p of poly){
+tmp.push({ mass: d.mass + p.mass, intensity: d.intensity * p.intensity });
+}
+}
+dist = binShifts(tmp);
+}
+return dist;
+}
+
+
+
+
+// function mergeBins(peaks){
+//   const bins={};
+//   for(const p of peaks){
+//     const key=Math.round(p.mass/binSize)*binSize;
+//     if(!bins[key]) bins[key]=0;
+//     bins[key]+=p.intensity;
+//   }
+//   return Object.entries(bins).map(([mass,intensity])=>({mass:parseFloat(mass),intensity}));
+// }
+
+function convolve(a,b){
+const tmp = [];
+for(const x of a){
+for(const y of b){
+tmp.push({ mass: x.mass + y.mass, intensity: x.intensity * y.intensity });
+}
+}
+if(!tmp.some(p => p.mass === 0)) tmp.push({ mass:0,intensity:0 });
+return binShifts(tmp);
 }
 
 function isotopePatternFFT(formula){
-  const comp=parseFormula(formula);
-  let dist=[{mass:0,intensity:1}];
-  for(const el in comp){
-    const elArr=generateElementArray(el,comp[el]);
-    dist=convolveSparse(dist,elArr);
-  }
-  const maxI=Math.max(...dist.map(p=>p.intensity));
-  return dist.map(p=>({mass:p.mass,intensity:p.intensity/maxI})).filter(p=>p.intensity>cutoffFactor);
+const comp = parseFormula(formula);
+let monoMass = 0;
+let dist = [{ mass: 0, intensity: 1 }];
+
+
+for(const el in comp){
+const e = elements[el];
+if(!e) throw new Error('Unknown element: '+el);
+dist = convolve(dist, generateElementArray(el, comp[el]));
+monoMass += e.masses[0] * comp[el];
 }
 
+
+const maxI = Math.max(...dist.map(p => p.intensity));
+if(maxI <= 0 || !isFinite(maxI)) throw new Error('Invalid max intensity');
+
+
+return dist.map(p => ({ mass: monoMass + p.mass, intensity: p.intensity / maxI }))
+.filter(p => p.intensity > cutoffFactor);
+}
+
+
+
+
 function isotopePatternFFTRemoveDAddCl(formula){
-  const comp=parseFormulaRemoveDAddCl(formula);
-  let dist=[{mass:0,intensity:1}];
-  for(const el in comp){
-    const elArr=generateElementArray(el,comp[el]);
-    dist=convolveSparse(dist,elArr);
-  }
-  const maxI=Math.max(...dist.map(p=>p.intensity));
-  return dist.map(p=>({mass:p.mass,intensity:p.intensity/maxI})).filter(p=>p.intensity>cutoffFactor);
+const comp = parseFormulaRemoveDAddCl(formula);
+let monoMass = 0;
+let dist = [{ mass: 0, intensity: 1 }];
+
+
+for(const el in comp){
+const e = elements[el];
+if(!e) throw new Error('Unknown element: '+el);
+dist = convolve(dist, generateElementArray(el, comp[el]));
+monoMass += e.masses[0] * comp[el];
+}
+
+
+const maxI = Math.max(...dist.map(p => p.intensity));
+if(maxI <= 0 || !isFinite(maxI)) throw new Error('Invalid max intensity');
+
+
+return dist.map(p => ({ mass: monoMass + p.mass, intensity: p.intensity / maxI }))
+.filter(p => p.intensity > cutoffFactor);
 }
 
 
 function isotopePatternFFTRemoveHAddCl(formula){
-  const comp=parseFormulaRemoveHAddCl(formula);
-  let dist=[{mass:0,intensity:1}];
-  for(const el in comp){
-    const elArr=generateElementArray(el,comp[el]);
-    dist=convolveSparse(dist,elArr);
-  }
-  const maxI=Math.max(...dist.map(p=>p.intensity));
-  return dist.map(p=>({mass:p.mass,intensity:p.intensity/maxI})).filter(p=>p.intensity>cutoffFactor);
+const comp = parseFormulaRemoveHAddCl(formula);
+let monoMass = 0;
+let dist = [{ mass: 0, intensity: 1 }];
+
+
+for(const el in comp){
+const e = elements[el];
+if(!e) throw new Error('Unknown element: '+el);
+dist = convolve(dist, generateElementArray(el, comp[el]));
+monoMass += e.masses[0] * comp[el];
 }
 
+
+const maxI = Math.max(...dist.map(p => p.intensity));
+if(maxI <= 0 || !isFinite(maxI)) throw new Error('Invalid max intensity');
+
+
+return dist.map(p => ({ mass: monoMass + p.mass, intensity: p.intensity / maxI }))
+.filter(p => p.intensity > cutoffFactor);
+}
+
+
+
+
 function isotopePatternFFTRemoveDAddBr(formula){
-  const comp=parseFormulaRemoveDAddBr(formula);
-  let dist=[{mass:0,intensity:1}];
-  for(const el in comp){
-    const elArr=generateElementArray(el,comp[el]);
-    dist=convolveSparse(dist,elArr);
-  }
-  const maxI=Math.max(...dist.map(p=>p.intensity));
-  return dist.map(p=>({mass:p.mass,intensity:p.intensity/maxI})).filter(p=>p.intensity>cutoffFactor);
+const comp = parseFormulaRemoveDAddBr(formula);
+let monoMass = 0;
+let dist = [{ mass: 0, intensity: 1 }];
+
+
+for(const el in comp){
+const e = elements[el];
+if(!e) throw new Error('Unknown element: '+el);
+dist = convolve(dist, generateElementArray(el, comp[el]));
+monoMass += e.masses[0] * comp[el];
+}
+
+
+const maxI = Math.max(...dist.map(p => p.intensity));
+if(maxI <= 0 || !isFinite(maxI)) throw new Error('Invalid max intensity');
+
+
+return dist.map(p => ({ mass: monoMass + p.mass, intensity: p.intensity / maxI }))
+.filter(p => p.intensity > cutoffFactor);
 }
 
 function isotopePatternFFTRemoveHAddBr(formula){
-  const comp=parseFormulaRemoveHAddBr(formula);
-  let dist=[{mass:0,intensity:1}];
-  for(const el in comp){
-    const elArr=generateElementArray(el,comp[el]);
-    dist=convolveSparse(dist,elArr);
-  }
-  const maxI=Math.max(...dist.map(p=>p.intensity));
-  return dist.map(p=>({mass:p.mass,intensity:p.intensity/maxI})).filter(p=>p.intensity>cutoffFactor);
+const comp = parseFormulaRemoveHAddBr(formula);
+let monoMass = 0;
+let dist = [{ mass: 0, intensity: 1 }];
+
+
+for(const el in comp){
+const e = elements[el];
+if(!e) throw new Error('Unknown element: '+el);
+dist = convolve(dist, generateElementArray(el, comp[el]));
+monoMass += e.masses[0] * comp[el];
+}
+
+
+const maxI = Math.max(...dist.map(p => p.intensity));
+if(maxI <= 0 || !isFinite(maxI)) throw new Error('Invalid max intensity');
+
+
+return dist.map(p => ({ mass: monoMass + p.mass, intensity: p.intensity / maxI }))
+.filter(p => p.intensity > cutoffFactor);
 }
 
 function draw(peaks,charge=1,plotid,title){
@@ -295,6 +403,129 @@ function draw(peaks,charge=1,plotid,title){
 //   ctx.fillText('Mono: '+monoMass.toFixed(2),50,canvas.height-25);
 }
 
+function addIsotopePatterns(p1, p2, p3, p4, p5) {
+  const map = new Map();
+
+  function addPeaks(peaks) {
+    for (let i = 0; i < peaks.length; i++) {
+      const p = peaks[i];
+      const bin = p.mass < 50 ? lowMassBin : highMassBin;
+      const key = Math.round(p.mass / bin) * bin;
+      map.set(key, (map.get(key) || 0) + p.intensity);
+    }
+  }
+
+  addPeaks(p1);
+  addPeaks(p2);
+  addPeaks(p3);
+  addPeaks(p4);
+  addPeaks(p5);
+
+  let maxI = 0;
+  for (const v of map.values()) {
+    if (v > maxI) maxI = v;
+  }
+
+  const out = [];
+  for (const [m, i] of map.entries()) {
+    const norm = i / maxI;
+    if (norm > cutoffFactor) {
+      out.push({ mass: m, intensity: norm });
+    }
+  }
+
+  return out;
+}
+
+
+function addIsotopeHalidePatterns(p1, p2) {
+  const map = new Map();
+
+  function addPeaks(peaks) {
+    for (let i = 0; i < peaks.length; i++) {
+      const p = peaks[i];
+      const bin = p.mass < 50 ? lowMassBin : highMassBin;
+      const key = Math.round(p.mass / bin) * bin;
+      map.set(key, (map.get(key) || 0) + p.intensity);
+    }
+  }
+
+  addPeaks(p1);
+  addPeaks(p2);
+ 
+  let maxI = 0;
+  for (const v of map.values()) {
+    if (v > maxI) maxI = v;
+  }
+
+  const out = [];
+  for (const [m, i] of map.entries()) {
+    const norm = i / maxI;
+    if (norm > cutoffFactor) {
+      out.push({ mass: m, intensity: norm });
+    }
+  }
+
+  return out;
+}
+
+
+function draw2(peaks,charge=1,plotid,title){
+  const canvas=document.getElementById(plotid);
+  const ctx=canvas.getContext('2d');
+
+  ctx.font = "10px Arial";
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const mz=peaks.map(p=>(p.mass+charge*protonMass)/charge);
+  const minMz=Math.min(...mz), maxMz=Math.max(...mz);
+  ctx.beginPath();
+  peaks.forEach((p,i)=>{
+    const x=50+((mz[i]-minMz)/(maxMz-minMz))*(canvas.width-80);
+    const y=canvas.height-30;
+    const h=p.intensity*(canvas.height-60);
+    ctx.moveTo(x,y); ctx.lineTo(x,y-h);
+    ctx.lineWidth = 10;
+    x_string = parseFloat(mz[i].toFixed(2)); ////////////////////////
+    ctx.fillText(x_string,x-15,y-h-5); ////////////////
+  });
+  ctx.stroke();
+//   ctx.fillText(minMz.toFixed(2),40,canvas.height-10);
+//   ctx.fillText(maxMz.toFixed(2),canvas.width-80,canvas.height-10);
+  const monoMass=Math.min(...mz);
+  ctx.font = "20px Arial";
+  ctx.fillText(title,600,50); ////////////////
+//   ctx.fillText('Mono: '+monoMass.toFixed(2),50,canvas.height-25);
+}
+
+function drawAll(peaks,charge=1,plotid,title){
+  const canvas=document.getElementById(plotid);
+  const ctx=canvas.getContext('2d');
+
+  ctx.font = "10px Arial";
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const mz=peaks.map(p=>(p.mass+charge*protonMass)/charge);
+  const minMz=Math.min(...mz), maxMz=Math.max(...mz);
+  ctx.beginPath();
+  peaks.forEach((p,i)=>{
+    const x=50+((mz[i]-minMz)/(maxMz-minMz))*(canvas.width-80);
+    const y=canvas.height-30;
+    const h=p.intensity*(canvas.height-60);
+    ctx.moveTo(x,y); ctx.lineTo(x,y-h);
+    ctx.lineWidth = 10;
+    x_string = parseFloat(mz[i].toFixed(2)); ////////////////////////
+    ctx.fillText(x_string,x-15,y-h-5); ////////////////
+  });
+  ctx.stroke();
+//   ctx.fillText(minMz.toFixed(2),40,canvas.height-10);
+//   ctx.fillText(maxMz.toFixed(2),canvas.width-80,canvas.height-10);
+  const monoMass=Math.min(...mz);
+  ctx.font = "20px Arial";
+  ctx.fillText(title,1600,50); ////////////////
+//   ctx.fillText('Mono: '+monoMass.toFixed(2),50,canvas.height-25);
+}
+
+
+
 function run(){
   const f=document.getElementById('formula').value;
   const peaks=isotopePatternFFT(f);
@@ -303,6 +534,11 @@ function run(){
   draw(isotopePatternFFTRemoveHAddCl(f),1,"plot3","M-H+Cl"); ////////////////
   draw(isotopePatternFFTRemoveDAddBr(f),1,"plot4","M-D+Br"); ////////////////
   draw(isotopePatternFFTRemoveHAddBr(f),1,"plot5","M-H+Br"); ////////////////
+
+  draw2(addIsotopeHalidePatterns(isotopePatternFFTRemoveDAddCl(f),isotopePatternFFTRemoveHAddCl(f)),1,"plot6","M-(D/H)+Cl");
+  draw2(addIsotopeHalidePatterns(isotopePatternFFTRemoveDAddBr(f),isotopePatternFFTRemoveHAddBr(f)),1,"plot7","M-(D/H)+Br");
+
+  drawAll(addIsotopePatterns(isotopePatternFFT(f), isotopePatternFFTRemoveDAddCl(f),isotopePatternFFTRemoveHAddCl(f),isotopePatternFFTRemoveDAddBr(f),isotopePatternFFTRemoveHAddBr(f)),1,"plot8","Overlayed");
 }
 
 </script>
