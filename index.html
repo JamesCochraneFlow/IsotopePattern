@@ -15,6 +15,18 @@ input, button { font-size: 15px; padding: 4px 4px; }
 <input id="formula" value="" placeholder="C78H28D38N4OPtSi" />
 </label>
 <button onclick="run()">Calculate</button>
+<label style="margin-left: 20px;"><span id = "charge">Charge (n+)</span></label>
+<input type="range" id="ncharge" min="0" max="3" step="1" value="0" oninput="charge()" style="width:100px;
+ margin-left: 5px;
+  height: 2px;
+  border-radius: 5px;  
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;  ">
+  <span style="margin-left: 50px;">Supported elements: H,D,C,N,O,Cl,Br,Pt,Ir</span>
+<br><br>
 <label style="margin-left: 20px;">Intensity cutoff:</label>
 <input type="range" id="cutoffSlider" min="-50" max="-1" step="1" value="-10" oninput="updateCutoffLabel()" style="width:100px;
  margin-left: 5px;
@@ -38,7 +50,7 @@ input, button { font-size: 15px; padding: 4px 4px; }
   transition: opacity .2s;  ">
 
 <label style="margin-left: 20px;"><span id = "thickness">Line thickness</span></label>
-<input type="range" id="nthickness" min="1" max="10" step="1" value="10" oninput="thickness()" style="width:100px;
+<input type="range" id="nthickness" min="1" max="10" step="1" value="4" oninput="thickness()" style="width:100px;
  margin-left: 5px;
   height: 2px;
   border-radius: 5px;  
@@ -49,7 +61,7 @@ input, button { font-size: 15px; padding: 4px 4px; }
   transition: opacity .2s;  ">
 
 <label style="margin-left: 20px;"><span id = "masstoggle">Mass toggle</span></label>
-<input type="range" id="nmasstoggle" min="0" max="1" step="1" value="0" oninput="masstoggle()" style="width:100px;
+<input type="range" id="nmasstoggle" min="0" max="1" step="1" value="0" oninput="masstoggle()" style="width:30px;
  margin-left: 5px;
   height: 2px;
   border-radius: 5px;  
@@ -59,8 +71,11 @@ input, button { font-size: 15px; padding: 4px 4px; }
   -webkit-transition: .2s;
   transition: opacity .2s;  ">
 
+
+
+
 <br><br>
-<canvas id="plot8" width="1800" height="150"></canvas>
+<canvas id="plot8" width="1000" height="150"></canvas>
 <canvas id="plot" width="1000" height="150"></canvas>
 <canvas id="plot2" width="1000" height="150"></canvas>
 <canvas id="plot3" width="1000" height="150"></canvas>
@@ -74,6 +89,19 @@ input, button { font-size: 15px; padding: 4px 4px; }
 <script>
 
 
+
+let chargeValue = 0;
+
+function charge(){
+const slider=document.getElementById('ncharge');
+chargeValue = slider.value;
+document.getElementById('charge').innerText = "Charge (" + chargeValue.toString() + "+)";
+// document.getElementById('cutoffValue').innerText = cutoffFactor.toExponential(1);
+    run();
+  
+}
+
+
 let masstogglevalue = 0;
 
 function masstoggle(){
@@ -83,7 +111,7 @@ masstogglevalue = slider.value;
     run();
 }
 
-let thicknessvalue = 10;
+let thicknessvalue = 4;
 
 function thickness(){
 const slider=document.getElementById('nthickness');
@@ -114,18 +142,43 @@ document.getElementById('nValue').innerText = nValueString + "D → " + nValueSt
 
 
 
-const elements={
-  C: { masses:[12.0000,13.003355], abundances:[0.9893,0.0107] },
-  H: { masses:[1.00782503223,2.01410177812], abundances:[0.999885,0.000115] },
-  D: { masses:[2.01410177812], abundances:[1.0] },
-  N: { masses:[14.00307400443,15.000109], abundances:[0.99632,0.00368] },
-  O: { masses:[15.99491461957,16.999132,17.999160], abundances:[0.99757,0.00038,0.00205] },
-  P: { masses:[30.97376199842], abundances:[1.0] },
-  Si:{ masses:[27.97692653465,28.976495,29.973770], abundances:[0.92223,0.04685,0.03092] },
-  Cl:{ masses:[34.968852682,36.96590259], abundances:[0.7576,0.2424] },
-  Br:{ masses:[78.9183376,80.916291], abundances:[0.5069,0.4931] },
-  Ir:{ masses:[192.962926, 194.964791, 195.964784, 196.965881, 198.967], abundances:[0.373, 0.627, 0, 0, 0] }, // iridium
-  Pt:{ masses:[194.9647917,195.964,196.964,198.964], abundances:[0.3383,0.3296,0.2524,0.0797] }
+const elements = {
+  H: { 
+    masses: [1.00782503223, 2.01410177812], 
+    abundances: [0.999885, 0.000115] 
+  },
+  D: { 
+    masses: [2.01410177812], 
+    abundances: [1.0] 
+  },
+  C: { 
+    masses: [12.0000000, 13.00335483507], 
+    abundances: [0.9893, 0.0107] 
+  },
+  N: { 
+    masses: [14.00307400443, 15.00010889888], 
+    abundances: [0.99636, 0.00364] 
+  },
+  O: { 
+    masses: [15.99491461957, 16.99913175650, 17.99915961286], 
+    abundances: [0.99757, 0.00038, 0.00205] 
+  },
+  Cl: { 
+    masses: [34.968852682, 36.965902602], 
+    abundances: [0.7576, 0.2424] 
+  },
+  Br: { 
+    masses: [78.9183376, 80.9162906], 
+    abundances: [0.5069, 0.4931] 
+  },
+  Pt: { 
+    masses: [193.962680, 194.964952, 195.967343, 196.967894], 
+    abundances: [0.338, 0.337, 0.253, 0.072] 
+  },
+  Ir: { 
+    masses: [190.960591, 192.962924], 
+    abundances: [0.373, 0.627] 
+  }
 };
 
 const protonMass=1.007276466812;
@@ -440,18 +493,18 @@ return dist.map(p => ({ mass: monoMass + p.mass, intensity: p.intensity / maxI }
 
 
 
-function getMostIntenseMass(formula){
-  const pattern = isotopePatternFFT(formula);
-  if (!pattern.length) return NaN;
+// function getMostIntenseMass(formula){
+//   const pattern = isotopePatternFFT(formula);
+//   if (!pattern.length) return NaN;
 
-  let maxPeak = pattern[0];
-  for (const p of pattern) {
-    if (p.intensity > maxPeak.intensity) {
-      maxPeak = p;
-    }
-  }
-  return maxPeak.mass;
-}
+//   let maxPeak = pattern[0];
+//   for (const p of pattern) {
+//     if (p.intensity > maxPeak.intensity) {
+//       maxPeak = p;
+//     }
+//   }
+//   return maxPeak.mass;
+// }
 
 function getMostIntenseMassCl(formula){
   const pattern = addIsotopeHalidePatterns(isotopePatternFFTRemoveDAddCl(formula),isotopePatternFFTRemoveHAddCl(formula));
@@ -575,37 +628,50 @@ return dist.map(p => ({ mass: monoMass + p.mass, intensity: p.intensity / maxI }
 .filter(p => p.intensity > cutoffFactor);
 }
 
-function draw(peaks,charge=1,plotid,title){
-  const canvas=document.getElementById(plotid);
-  const ctx=canvas.getContext('2d');
+function draw(peaks, charge, plotid, title) {
+  const canvas = document.getElementById(plotid);
+  const ctx = canvas.getContext('2d');
   ctx.font = "11px Arial";
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const mz=peaks.map(p=>(p.mass+charge*protonMass)/charge);
-  const minMz=Math.min(...mz), maxMz=Math.max(...mz);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Decide axis values explicitly
+  const xvals = peaks.map(p =>
+    charge > 0
+      ? (p.mass + charge * protonMass) / charge   // m/z
+      : p.mass                                    // neutral mass
+  );
+
+  const minX = Math.min(...xvals);
+  const maxX = Math.max(...xvals);
+
   ctx.beginPath();
-  peaks.forEach((p,i)=>{
-    const x=50+((mz[i]-minMz)/(maxMz-minMz))*(canvas.width-80);
-    const y=canvas.height-30;
-    const h=p.intensity*(canvas.height-60);
-    ctx.moveTo(x,y); ctx.lineTo(x,y-h);
+
+  peaks.forEach((p, i) => {
+    const x = 50 + ((xvals[i] - minX) / (maxX - minX)) * (canvas.width - 80);
+    const y = canvas.height - 30;
+    const h = p.intensity * (canvas.height - 60);
+
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y - h);
     ctx.lineWidth = thicknessvalue;
+
     ctx.fillStyle = "black";
     if (masstogglevalue == 0) {
-    x_string = parseFloat(mz[i].toFixed(2)); ////////////////////////
+    x_string = parseFloat(xvals[i].toFixed(2)); ////////////////////////
     ctx.fillText(x_string,x-15,y-h-5);
     } 
     else {}
-    ////////////////
   });
+
   ctx.stroke();
-//   ctx.fillText(minMz.toFixed(2),40,canvas.height-10);
-//   ctx.fillText(maxMz.toFixed(2),canvas.width-80,canvas.height-10);
-  const monoMass=Math.min(...mz);
+
   ctx.font = "20px Arial";
   ctx.fillStyle = "red";
+  ctx.fillText(title, 850, 30);
 
-  ctx.fillText(title,870,30); ////////////////
-//   ctx.fillText('Mono: '+monoMass.toFixed(2),50,canvas.height-25);
+  ctx.font = "12px Arial";
+  ctx.fillStyle = "red";
+  ctx.fillText(chargeValue.toString() + "+", 934, 20);
 }
 
 function addIsotopePatterns(p1, p2, p3, p4, p5) {
@@ -675,89 +741,150 @@ function addIsotopeHalidePatterns(p1, p2) {
 }
 
 
-function draw2(peaks,charge=1,plotid,title){
-  const canvas=document.getElementById(plotid);
-  const ctx=canvas.getContext('2d');
+function draw2(peaks, charge, plotid, title) {
+  const canvas = document.getElementById(plotid);
+  const ctx = canvas.getContext('2d');
+  ctx.font = "11px Arial";
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  ctx.font = "10px Arial";
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const mz=peaks.map(p=>(p.mass+charge*protonMass)/charge);
-  const minMz=Math.min(...mz), maxMz=Math.max(...mz);
+  // Decide axis values explicitly
+  const xvals = peaks.map(p =>
+    charge > 0
+      ? (p.mass + charge * protonMass) / charge   // m/z
+      : p.mass                                    // neutral mass
+  );
+
+  const minX = Math.min(...xvals);
+  const maxX = Math.max(...xvals);
+
   ctx.beginPath();
-  peaks.forEach((p,i)=>{
-    const x=50+((mz[i]-minMz)/(maxMz-minMz))*(canvas.width-80);
-    const y=canvas.height-30;
-    const h=p.intensity*(canvas.height-60);
-    ctx.moveTo(x,y); ctx.lineTo(x,y-h);
+
+  peaks.forEach((p, i) => {
+    const x = 50 + ((xvals[i] - minX) / (maxX - minX)) * (canvas.width - 80);
+    const y = canvas.height - 30;
+    const h = p.intensity * (canvas.height - 60);
+
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y - h);
     ctx.lineWidth = thicknessvalue;
 
     ctx.fillStyle = "black";
     if (masstogglevalue == 0) {
-    x_string = parseFloat(mz[i].toFixed(2)); ////////////////////////
+    x_string = parseFloat(xvals[i].toFixed(2)); ////////////////////////
     ctx.fillText(x_string,x-15,y-h-5);
     } 
     else {}
   });
+
   ctx.stroke();
-//   ctx.fillText(minMz.toFixed(2),40,canvas.height-10);
-//   ctx.fillText(maxMz.toFixed(2),canvas.width-80,canvas.height-10);
-  const monoMass=Math.min(...mz);
+
   ctx.font = "20px Arial";
   ctx.fillStyle = "red";
-  ctx.fillText(title,870,30); ////////////////
-//   ctx.fillText('Mono: '+monoMass.toFixed(2),50,canvas.height-25);
+  ctx.fillText(title, 850, 30);
+
+  ctx.font = "12px Arial";
+  ctx.fillStyle = "red";
+  ctx.fillText(chargeValue.toString() + "+", 965, 20);
 }
 
-function drawAll(peaks,charge=1,plotid,title,formula){
-  const canvas=document.getElementById(plotid);
-  const ctx=canvas.getContext('2d');
 
-  ctx.font = "10px Arial";
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const mz=peaks.map(p=>(p.mass+charge*protonMass)/charge);
-  const minMz=Math.min(...mz), maxMz=Math.max(...mz);
+function drawAll(peaks, charge, plotid, title,formula) {
+  const canvas = document.getElementById(plotid);
+  const ctx = canvas.getContext('2d');
+  ctx.font = "11px Arial";
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Decide axis values explicitly
+  const xvals = peaks.map(p =>
+    charge > 0
+      ? (p.mass + charge * protonMass) / charge   // m/z
+      : p.mass                                    // neutral mass
+  );
+
+  
+  
+
+
+  let maxPeak = xvals[0];
+  for (const p of xvals) {
+    if (p.intensity > maxPeak.intensity) {
+      maxPeak = p;
+    }
+  }
+  
+
+
+  const minX = Math.min(...xvals);
+  const maxX = Math.max(...xvals);
+
   ctx.beginPath();
-  peaks.forEach((p,i)=>{
-    const x=50+((mz[i]-minMz)/(maxMz-minMz))*(canvas.width-80);
-    const y=canvas.height-30;
-    const h=p.intensity*(canvas.height-60);
-    ctx.moveTo(x,y); ctx.lineTo(x,y-h);
-    ctx.lineWidth = thicknessvalue;
 
+  peaks.forEach((p, i) => {
+    const x = 50 + ((xvals[i] - minX) / (maxX - minX)) * (canvas.width - 80);
+    const y = canvas.height - 30;
+    const h = p.intensity * (canvas.height - 60);
+
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y - h);
+    ctx.lineWidth = thicknessvalue;
     ctx.fillStyle = "black";
     if (masstogglevalue == 0) {
-    x_string = parseFloat(mz[i].toFixed(2)); ////////////////////////
+    x_string = parseFloat(xvals[i].toFixed(2)); ////////////////////////
     ctx.fillText(x_string,x-15,y-h-5);
     } 
     else {}
   });
+   
   ctx.stroke();
-//   ctx.fillText(minMz.toFixed(2),40,canvas.height-10);
-//   ctx.fillText(maxMz.toFixed(2),canvas.width-80,canvas.height-10);
-  const monoMass=Math.min(...mz);
+  const monoMass=Math.min(...xvals);
   ctx.font = "20px Arial";
   ctx.fillStyle = "red";
-  ctx.fillText("M",70+((getMostIntenseMass(formula)-minMz)/(maxMz-minMz))*(canvas.width-80),140); ////////////////
-  ctx.fillText("M-(D/H)+Cl",30+((getMostIntenseMassCl(formula)-minMz)/(maxMz-minMz))*(canvas.width-80),140); ////////////////
-  ctx.fillText("M-(D/H)+Br",30+((getMostIntenseMassBr(formula)-minMz)/(maxMz-minMz))*(canvas.width-80),140); ////////////////
-//   ctx.fillText('Mono: '+monoMass.toFixed(2),50,canvas.height-25);
+  ctx.fillText("[M]",50+((maxPeak-minX)/(maxX-minX))*(canvas.width-80),140); ////////////////
+  
+
+  if (charge == 0){
+    ctx.fillText("[M-(D/H)+Cl]",20+((maxPeak+36-minX)/(maxX-minX))*(canvas.width-80),140); ////////////////
+    ctx.fillText("[M-(D/H)+Br]",20+((maxPeak+80-minX)/(maxX-minX))*(canvas.width-80),140);
+    
+    ctx.font = "12px Arial";
+    ctx.fillStyle = "red";
+    ctx.fillText(chargeValue.toString() + "+",135+((maxPeak+36-minX)/(maxX-minX))*(canvas.width-80),132); ////////////////
+    ctx.fillText(chargeValue.toString() + "+",135+((maxPeak+80-minX)/(maxX-minX))*(canvas.width-80),132);
+  }
+  
+  else{
+
+
+    ctx.fillText("[M-(D/H)+Cl]",20+((maxPeak+(36/charge)-minX)/(maxX-minX))*(canvas.width-80),140); ////////////////
+    ctx.fillText("[M-(D/H)+Br]",20+((maxPeak+(80/charge)-minX)/(maxX-minX))*(canvas.width-80),140); ////////////////
+    ctx.font = "12px Arial";
+    ctx.fillStyle = "red";
+    ctx.fillText(chargeValue.toString() + "+",135+((maxPeak+(36/charge)-minX)/(maxX-minX))*(canvas.width-80),132); ////////////////
+    ctx.fillText(chargeValue.toString() + "+",135+((maxPeak+(80/charge)-minX)/(maxX-minX))*(canvas.width-80),132);
+  }
+  
+  ctx.font = "12px Arial";
+  ctx.fillStyle = "red";
+  ctx.fillText(chargeValue.toString() + "+", 80+((maxPeak-minX)/(maxX-minX))*(canvas.width-80),132);
+  
 }
+
 
 
 
 function run(){
   const f=document.getElementById('formula').value;
 
-  draw(isotopePatternFFT(f),1,"plot","M");
-  draw(isotopePatternFFTRemoveDAddCl(f),1,"plot2","M-D+Cl"); ////////////////
-  draw(isotopePatternFFTRemoveHAddCl(f),1,"plot3","M-H+Cl"); ////////////////
-  draw(isotopePatternFFTRemoveDAddBr(f),1,"plot4","M-D+Br"); ////////////////
-  draw(isotopePatternFFTRemoveHAddBr(f),1,"plot5","M-H+Br"); ////////////////
+  draw(isotopePatternFFT(f),chargeValue,"plot","         [M]");
+  draw(isotopePatternFFTRemoveDAddCl(f),chargeValue,"plot2","[M-D+Cl]"); ////////////////
+  draw(isotopePatternFFTRemoveHAddCl(f),chargeValue,"plot3","[M-H+Cl]"); ////////////////
+  draw(isotopePatternFFTRemoveDAddBr(f),chargeValue,"plot4","[M-D+Br]"); ////////////////
+  draw(isotopePatternFFTRemoveHAddBr(f),chargeValue,"plot5","[M-H+Br]"); ////////////////
 
-  draw2(addIsotopeHalidePatterns(isotopePatternFFTRemoveDAddCl(f),isotopePatternFFTRemoveHAddCl(f)),1,"plot6","M-(D/H)+Cl");
-  draw2(addIsotopeHalidePatterns(isotopePatternFFTRemoveDAddBr(f),isotopePatternFFTRemoveHAddBr(f)),1,"plot7","M-(D/H)+Br");
+  draw2(addIsotopeHalidePatterns(isotopePatternFFTRemoveDAddCl(f),isotopePatternFFTRemoveHAddCl(f)),chargeValue,"plot6","[M-(D/H)+Cl]");
+  draw2(addIsotopeHalidePatterns(isotopePatternFFTRemoveDAddBr(f),isotopePatternFFTRemoveHAddBr(f)),chargeValue,"plot7","[M-(D/H)+Br]");
 
-  drawAll(addIsotopePatterns(isotopePatternFFT(f), isotopePatternFFTRemoveDAddCl(f),isotopePatternFFTRemoveHAddCl(f),isotopePatternFFTRemoveDAddBr(f),isotopePatternFFTRemoveHAddBr(f)),1,"plot8","Overlayed",f);
+  drawAll(addIsotopePatterns(isotopePatternFFT(f), isotopePatternFFTRemoveDAddCl(f),isotopePatternFFTRemoveHAddCl(f),isotopePatternFFTRemoveDAddBr(f),isotopePatternFFTRemoveHAddBr(f)),chargeValue,"plot8","Overlayed",f);
 }
 
 </script>
