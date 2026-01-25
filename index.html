@@ -25,9 +25,9 @@ input, button { font-size: 15px; padding: 4px 4px; }
   opacity: 0.7;
   -webkit-transition: .2s;
   transition: opacity .2s;  ">
-  <span style="margin-left: 50px;">Supported elements: H,D,C,N,O,Cl,Br,Pt,Ir</span>
+  <button style="margin-left: 240px;" onclick="info()">Tool information &#9432;</button>
 <br><br>
-<label style="margin-left: 20px;">Intensity cutoff:</label>
+<label style="margin-left: 0px;">Intensity cutoff (zoom)</label>
 <input type="range" id="cutoffSlider" min="-50" max="-1" step="1" value="-10" oninput="updateCutoffLabel()" style="width:100px;
  margin-left: 5px;
   height: 2px;
@@ -38,7 +38,7 @@ input, button { font-size: 15px; padding: 4px 4px; }
   -webkit-transition: .2s;
   transition: opacity .2s;  ">
 
-<label style="margin-left: 20px;"><span id = "nValue">nD → nH</span></label>
+<label style="margin-left: 20px;"><span id = "nValue">Swap nD for nH</span></label>
 <input type="range" id="nSlider" min="0" max="9" step="1" value="0" oninput="updateN()" style="width:100px;
  margin-left: 5px;
   height: 2px;
@@ -60,7 +60,7 @@ input, button { font-size: 15px; padding: 4px 4px; }
   -webkit-transition: .2s;
   transition: opacity .2s;  ">
 
-<label style="margin-left: 20px;"><span id = "masstoggle">Mass toggle</span></label>
+<label style="margin-left: 20px;"><span id = "masstoggle">Show masses (on/off)</span></label>
 <input type="range" id="nmasstoggle" min="0" max="1" step="1" value="0" oninput="masstoggle()" style="width:30px;
  margin-left: 5px;
   height: 2px;
@@ -88,7 +88,12 @@ input, button { font-size: 15px; padding: 4px 4px; }
 
 <script>
 
+function info() {
+  var myWindow = window.open("", "MsgWindow", "width=400,height=400");
+  myWindow.document.write("<p>Supported elements (all 80 stable elements): <br></br>H, D, He, Li, Be, B, C, N, O, F, Ne, Na, Mg, Al, Si, P, S, Cl, Ar, K, Ca, Sc, Ti, V, Cr, Mn, Fe, Co, Ni, Cu, Zn, Ga, Ge, As, Se, Br, Kr, Rb, Sr, Y, Zr, Nb, Mo, Ru, Rh, Pd, Ag, Cd, In, Sn, Sb, Te, I, Xe, Cs, Ba, La, Ce, Pr, Nd, Sm, Eu, Gd, Tb, Dy, Ho, Er, Tm, Yb, Lu, Hf, Ta, W, Re, Os, Ir, Pt, Au, Hg, Tl, Pb</p>");
+  myWindow.document.write("<p>Molecular formula must contain at least one H or one D. Code can be easily modified to overcome this restriction if desired. This current restriction is in place to make implementation of (Swap nD for nH) straightforward</p>");
 
+}
 
 let chargeValue = 0;
 
@@ -136,50 +141,154 @@ function updateN(){
 const slider=document.getElementById('nSlider');
 nValue = parseInt(slider.value);
 nValueString = nValue.toString();
-document.getElementById('nValue').innerText = nValueString + "D → " + nValueString +"H";
+document.getElementById('nValue').innerText = "Swap " + nValueString + "D for " + nValueString +"H";
     run();
 }
 
 
 
+// const elements = {
+//   H: { 
+//     masses: [1.00782503223, 2.01410177812], 
+//     abundances: [0.999885, 0.000115] 
+//   },
+//   D: { 
+//     masses: [2.01410177812], 
+//     abundances: [1.0] 
+//   },
+//   C: { 
+//     masses: [12.0000000, 13.00335483507], 
+//     abundances: [0.9893, 0.0107] 
+//   },
+//   N: { 
+//     masses: [14.00307400443, 15.00010889888], 
+//     abundances: [0.99636, 0.00364] 
+//   },
+//   O: { 
+//     masses: [15.99491461957, 16.99913175650, 17.99915961286], 
+//     abundances: [0.99757, 0.00038, 0.00205] 
+//   },
+//   Cl: { 
+//     masses: [34.968852682, 36.965902602], 
+//     abundances: [0.7576, 0.2424] 
+//   },
+//   Br: { 
+//     masses: [78.9183376, 80.9162906], 
+//     abundances: [0.5069, 0.4931] 
+//   },
+//   Pt: { 
+//     masses: [193.962680, 194.964952, 195.967343, 196.967894], 
+//     abundances: [0.338, 0.337, 0.253, 0.072] 
+//   },
+//   Ir: { 
+//     masses: [190.960591, 192.962924], 
+//     abundances: [0.373, 0.627] 
+//   }
+// };
+
 const elements = {
-  H: { 
-    masses: [1.00782503223, 2.01410177812], 
-    abundances: [0.999885, 0.000115] 
-  },
-  D: { 
-    masses: [2.01410177812], 
-    abundances: [1.0] 
-  },
-  C: { 
-    masses: [12.0000000, 13.00335483507], 
-    abundances: [0.9893, 0.0107] 
-  },
-  N: { 
-    masses: [14.00307400443, 15.00010889888], 
-    abundances: [0.99636, 0.00364] 
-  },
-  O: { 
-    masses: [15.99491461957, 16.99913175650, 17.99915961286], 
-    abundances: [0.99757, 0.00038, 0.00205] 
-  },
-  Cl: { 
-    masses: [34.968852682, 36.965902602], 
-    abundances: [0.7576, 0.2424] 
-  },
-  Br: { 
-    masses: [78.9183376, 80.9162906], 
-    abundances: [0.5069, 0.4931] 
-  },
-  Pt: { 
-    masses: [193.962680, 194.964952, 195.967343, 196.967894], 
-    abundances: [0.338, 0.337, 0.253, 0.072] 
-  },
-  Ir: { 
-    masses: [190.960591, 192.962924], 
-    abundances: [0.373, 0.627] 
-  }
+
+H:  { masses:[1.00782503223], abundances:[1.0] },
+D:  { masses:[2.01410177812], abundances:[1.0] },
+
+He: { masses:[4.00260325413], abundances:[1.0] },
+
+Li: { masses:[6.0151228874,7.0160034366], abundances:[0.0759,0.9241] },
+Be: { masses:[9.012183065], abundances:[1.0] },
+B:  { masses:[10.01293695,11.00930536], abundances:[0.199,0.801] },
+C:  { masses:[12.0000000,13.00335483507], abundances:[0.9893,0.0107] },
+N:  { masses:[14.00307400443,15.00010889888], abundances:[0.99636,0.00364] },
+O:  { masses:[15.99491461957,16.99913175650,17.99915961286], abundances:[0.99757,0.00038,0.00205] },
+F:  { masses:[18.99840316273], abundances:[1.0] },
+Ne: { masses:[19.9924401762,20.993846685,21.991385114], abundances:[0.9048,0.0027,0.0925] },
+
+Na: { masses:[22.9897692820], abundances:[1.0] },
+Mg: { masses:[23.985041697,24.985836976,25.982592968], abundances:[0.7899,0.10,0.1101] },
+Al: { masses:[26.98153853], abundances:[1.0] },
+Si: { masses:[27.97692653465,28.9764946649,29.973770136], abundances:[0.92223,0.04685,0.03092] },
+P:  { masses:[30.97376199842], abundances:[1.0] },
+S:  { masses:[31.9720711744,32.9714589098,33.96786701,35.967081], abundances:[0.9499,0.0075,0.0425,0.0001] },
+Cl: { masses:[34.968852682,36.965902602], abundances:[0.7576,0.2424] },
+Ar: { masses:[35.967545105,37.96273211,39.9623831237], abundances:[0.00337,0.00063,0.996] },
+
+K:  { masses:[38.9637064864,39.963998166,40.9618252579], abundances:[0.932581,0.000117,0.067302] },
+Ca: { masses:[39.962590863,41.95861783,42.9587666,43.9554818,44.955914,45.9536926,47.9525229], abundances:[0.96941,0.00647,0.00135,0.02086,0.00004,0.00187,0.001] },
+
+Sc: { masses:[44.95590828], abundances:[1.0] },
+Ti: { masses:[45.95262772,46.95175879,47.94794198,48.94786568,49.94478689], abundances:[0.0825,0.0744,0.7372,0.0541,0.0518] },
+V:  { masses:[49.94715601,50.94395704], abundances:[0.0025,0.9975] },
+Cr: { masses:[49.94604183,51.94050623,52.94064815,53.93887916], abundances:[0.04345,0.83789,0.09501,0.02365] },
+Mn: { masses:[54.93804391], abundances:[1.0] },
+Fe: { masses:[53.939609,55.93493633,56.93539284,57.93327443], abundances:[0.05845,0.91754,0.02119,0.00282] },
+Co: { masses:[58.93319429], abundances:[1.0] },
+Ni: { masses:[57.93534241,59.93078588,60.93105557,61.92834537,62.92959772,64.92778970], abundances:[0.68077,0.26223,0.0114,0.0363,0.0093,0.00097] },
+Cu: { masses:[62.92959772,64.92778970], abundances:[0.6915,0.3085] },
+Zn: { masses:[63.92914201,65.92603381,66.92712775,67.92484455,69.9253192], abundances:[0.491,0.277,0.041,0.041,0.186] },
+
+Ga: { masses:[68.9255735,70.9247026], abundances:[0.601,0.399] },
+Ge: { masses:[69.92424875,71.92207583,72.92345895,73.92117776,75.9214026], abundances:[0.205,0.274,0.078,0.365,0.078] },
+As: { masses:[74.921595], abundances:[1.0] },
+Se: { masses:[73.9224766,75.9192141,76.9199146,77.9173093,79.9165218,81.9166995], abundances:[0.0089,0.0937,0.0763,0.2377,0.4961,0.0873] },
+Br: { masses:[78.9183376,80.9162906], abundances:[0.5069,0.4931] },
+Kr: { masses:[77.92036494,79.9163790,81.9134836,82.914136,83.911507,85.91061073], abundances:[0.0036,0.0229,0.1159,0.115,0.57,0.173] },
+
+Rb: { masses:[84.91178974,86.90918053], abundances:[0.7217,0.2783] },
+Sr: { masses:[83.9134191,85.9092606,86.9088775,87.9056125], abundances:[0.0056,0.0986,0.07,0.8258] },
+Y:  { masses:[88.9058403], abundances:[1.0] },
+Zr: { masses:[89.9046977,91.9050408,92.9064760,93.9063152,95.9082734], abundances:[0.5145,0.1122,0.1715,0.1738,0.028] },
+Nb: { masses:[92.9063730], abundances:[1.0] },
+Mo: { masses:[91.90680796,93.90508490,94.90583877,95.90467612,96.90601812,97.90540482,99.9074718], abundances:[0.1484,0.0925,0.1592,0.1668,0.0955,0.2413,0.0963] },
+
+Ru: { masses:[95.90759025,97.9052868,98.9059341,99.9042143,100.9055769,101.9043441,103.9054275], abundances:[0.0554,0.0187,0.1276,0.126,0.1706,0.3155,0.1862] },
+Rh: { masses:[102.9054980], abundances:[1.0] },
+Pd: { masses:[101.9056022,103.9040305,104.9050796,105.9034804,107.9038916,109.9051729], abundances:[0.0102,0.1114,0.2233,0.2733,0.2646,0.1172] },
+Ag: { masses:[106.9050916,108.9047553], abundances:[0.51839,0.48161] },
+Cd: { masses:[105.9064599,107.9041834,109.9030066,110.9041829,111.9027629,112.9044081,113.9033651,115.9047632], abundances:[0.0125,0.0089,0.1249,0.128,0.2413,0.1222,0.2873,0.0749] },
+
+In: { masses:[112.9040618,114.9038788], abundances:[0.0429,0.9571] },
+Sn: { masses:[111.9048239,113.9027827,114.9033447,115.9017428,116.902954,117.9016066,118.9033112,119.9022016,121.9034438,123.9052766], abundances:[0.0097,0.0066,0.0034,0.1454,0.0768,0.2422,0.0859,0.3258,0.0463,0.0579] },
+
+Sb: { masses:[120.9038120,122.9042132], abundances:[0.5721,0.4279] },
+Te: { masses:[119.9040593,121.9030435,122.9042698,123.9028171,124.9044299,125.9033109,127.9044613,129.9062227], abundances:[0.0009,0.0255,0.0089,0.0474,0.0707,0.1884,0.3174,0.3408] },
+I:  { masses:[126.9044719], abundances:[1.0] },
+Xe: { masses:[123.9058920,125.9042983,127.9035310,128.9047809,129.9035093,130.9050841,131.9041551,133.9053947,135.9072145], abundances:[0.00095,0.00089,0.0191,0.264,0.041,0.212,0.269,0.104,0.089] },
+
+Cs: { masses:[132.90545196], abundances:[1.0] },
+Ba: { masses:[129.9063207,131.9050611,133.9045084,134.9056886,135.9045759,136.9058271,137.905247], abundances:[0.00106,0.00101,0.0242,0.0659,0.0785,0.1123,0.717] },
+
+La: { masses:[138.9063563], abundances:[1.0] },
+Ce: { masses:[135.907129,137.905991,139.9054387,141.909244], abundances:[0.0019,0.0025,0.8845,0.1111] },
+
+Pr: { masses:[140.9076576], abundances:[1.0] },
+Nd: { masses:[141.907729,143.910093,144.912579,145.913123,147.916899,149.920902], abundances:[0.272,0.122,0.238,0.083,0.172,0.113] },
+
+Sm: { masses:[143.911999,146.9148979,147.9148227,148.9171847,149.9172755,151.9197397,153.9222169], abundances:[0.0307,0.1499,0.1124,0.1382,0.0738,0.2675,0.2275] },
+Eu: { masses:[150.9198578,152.9212380], abundances:[0.4781,0.5219] },
+Gd: { masses:[151.9197995,153.9208741,154.9226305,155.9221312,156.9239686,157.9241123,159.9270624], abundances:[0.002,0.0218,0.148,0.2047,0.1565,0.2484,0.2186] },
+
+Tb: { masses:[158.9253547], abundances:[1.0] },
+Dy: { masses:[155.9242847,157.924409,159.9251975,160.9269334,161.9267984,162.9287312,163.9291748], abundances:[0.0006,0.001,0.0234,0.1891,0.2551,0.249,0.2818] },
+Ho: { masses:[164.9303288], abundances:[1.0] },
+Er: { masses:[161.9287884,163.9292088,165.9302995,166.9320546,167.9323767,169.9354702], abundances:[0.0014,0.0161,0.3361,0.2293,0.2678,0.1493] },
+Tm: { masses:[168.9342179], abundances:[1.0] },
+Yb: { masses:[167.9338896,169.9347664,170.9363302,171.9363859,172.9382151,173.9388664,175.9425764], abundances:[0.0013,0.0304,0.1428,0.2183,0.1613,0.3183,0.1289] },
+Lu: { masses:[174.9407752,175.9426897], abundances:[0.9741,0.0259] },
+
+Hf: { masses:[173.9400461,175.9414076,176.9432277,177.9437058,178.9458232,179.9465570], abundances:[0.0016,0.0526,0.186,0.2728,0.1362,0.3508] },
+Ta: { masses:[180.9479958], abundances:[1.0] },
+W:  { masses:[179.9467108,181.9482039,182.9502228,183.9509309,185.9543628], abundances:[0.0012,0.265,0.1431,0.3064,0.2843] },
+Re: { masses:[184.9529545,186.9557501], abundances:[0.374,0.626] },
+Os: { masses:[183.9524885,185.9538350,186.9557474,187.9558352,188.9581442,189.9584437,191.9614770], abundances:[0.0002,0.0159,0.0196,0.1324,0.1615,0.2626,0.4078] },
+Ir: { masses:[190.9605893,192.9629216], abundances:[0.373,0.627] },
+Pt: { masses:[193.9626809,194.9647911,195.9649515,196.9673402,197.9678949], abundances:[0.3297,0.3383,0.2522,0.0749,0.0059] },
+Au: { masses:[196.96656879], abundances:[1.0] },
+Hg: { masses:[195.9658326,197.9667686,198.9682806,199.9683260,200.9703028,201.9706436,203.9734939], abundances:[0.0015,0.0997,0.1687,0.231,0.1318,0.2986,0.0687] },
+
+Tl: { masses:[202.9723446,204.9744278], abundances:[0.2952,0.7048] },
+Pb: { masses:[203.9730440,205.9744657,206.9758973,207.9766525], abundances:[0.014,0.241,0.221,0.524] }
+
 };
+
 
 const protonMass=1.007276466812;
 
@@ -628,7 +737,7 @@ return dist.map(p => ({ mass: monoMass + p.mass, intensity: p.intensity / maxI }
 .filter(p => p.intensity > cutoffFactor);
 }
 
-function draw(peaks, charge, plotid, title) {
+function draw(peaks, charge, plotid, title, colorx) {
   const canvas = document.getElementById(plotid);
   const ctx = canvas.getContext('2d');
   ctx.font = "11px Arial";
@@ -666,11 +775,11 @@ function draw(peaks, charge, plotid, title) {
   ctx.stroke();
 
   ctx.font = "20px Arial";
-  ctx.fillStyle = "red";
+  ctx.fillStyle = colorx;
   ctx.fillText(title, 850, 30);
 
   ctx.font = "12px Arial";
-  ctx.fillStyle = "red";
+  ctx.fillStyle = colorx;
   ctx.fillText(chargeValue.toString() + "+", 934, 20);
 }
 
@@ -838,11 +947,12 @@ function drawAll(peaks, charge, plotid, title,formula) {
   ctx.stroke();
   const monoMass=Math.min(...xvals);
   ctx.font = "20px Arial";
-  ctx.fillStyle = "red";
+  ctx.fillStyle = "green";
   ctx.fillText("[M]",50+((maxPeak-minX)/(maxX-minX))*(canvas.width-80),140); ////////////////
   
 
   if (charge == 0){
+    ctx.fillStyle = "red";
     ctx.fillText("[M-(D/H)+Cl]",20+((maxPeak+36-minX)/(maxX-minX))*(canvas.width-80),140); ////////////////
     ctx.fillText("[M-(D/H)+Br]",20+((maxPeak+80-minX)/(maxX-minX))*(canvas.width-80),140);
     
@@ -854,7 +964,7 @@ function drawAll(peaks, charge, plotid, title,formula) {
   
   else{
 
-
+    ctx.fillStyle = "red";
     ctx.fillText("[M-(D/H)+Cl]",20+((maxPeak+(36/charge)-minX)/(maxX-minX))*(canvas.width-80),140); ////////////////
     ctx.fillText("[M-(D/H)+Br]",20+((maxPeak+(80/charge)-minX)/(maxX-minX))*(canvas.width-80),140); ////////////////
     ctx.font = "12px Arial";
@@ -864,22 +974,20 @@ function drawAll(peaks, charge, plotid, title,formula) {
   }
   
   ctx.font = "12px Arial";
-  ctx.fillStyle = "red";
+  ctx.fillStyle = "green";
   ctx.fillText(chargeValue.toString() + "+", 80+((maxPeak-minX)/(maxX-minX))*(canvas.width-80),132);
   
 }
 
 
-
-
 function run(){
   const f=document.getElementById('formula').value;
 
-  draw(isotopePatternFFT(f),chargeValue,"plot","         [M]");
-  draw(isotopePatternFFTRemoveDAddCl(f),chargeValue,"plot2","[M-D+Cl]"); ////////////////
-  draw(isotopePatternFFTRemoveHAddCl(f),chargeValue,"plot3","[M-H+Cl]"); ////////////////
-  draw(isotopePatternFFTRemoveDAddBr(f),chargeValue,"plot4","[M-D+Br]"); ////////////////
-  draw(isotopePatternFFTRemoveHAddBr(f),chargeValue,"plot5","[M-H+Br]"); ////////////////
+  draw(isotopePatternFFT(f),chargeValue,"plot","         [M]","green");
+  draw(isotopePatternFFTRemoveDAddCl(f),chargeValue,"plot2","[M-D+Cl]","orange"); ////////////////
+  draw(isotopePatternFFTRemoveHAddCl(f),chargeValue,"plot3","[M-H+Cl]","orange"); ////////////////
+  draw(isotopePatternFFTRemoveDAddBr(f),chargeValue,"plot4","[M-D+Br]","orange"); ////////////////
+  draw(isotopePatternFFTRemoveHAddBr(f),chargeValue,"plot5","[M-H+Br]","orange"); ////////////////
 
   draw2(addIsotopeHalidePatterns(isotopePatternFFTRemoveDAddCl(f),isotopePatternFFTRemoveHAddCl(f)),chargeValue,"plot6","[M-(D/H)+Cl]");
   draw2(addIsotopeHalidePatterns(isotopePatternFFTRemoveDAddBr(f),isotopePatternFFTRemoveHAddBr(f)),chargeValue,"plot7","[M-(D/H)+Br]");
